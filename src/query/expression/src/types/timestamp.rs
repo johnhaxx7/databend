@@ -27,6 +27,7 @@ use crate::property::Domain;
 use crate::types::ArgType;
 use crate::types::DataType;
 use crate::types::GenericMap;
+use crate::types::NumberType;
 use crate::types::ValueType;
 use crate::utils::arrow::buffer_into_mut;
 use crate::utils::date_helper::DateConverter;
@@ -214,9 +215,9 @@ pub fn microseconds_to_days(micros: i64) -> i32 {
 }
 
 #[inline]
-pub fn string_to_timestamp(ts_str: impl AsRef<[u8]>, tz: Tz) -> Option<DateTime<Tz>> {
+pub fn string_to_timestamp(ts_str: impl AsRef<[u8]>, fsp: u64, tz: Tz) -> Option<DateTime<Tz>> {
     let mut reader = Cursor::new(std::str::from_utf8(ts_str.as_ref()).unwrap().as_bytes());
-    match reader.read_timestamp_text(&tz) {
+    match reader.read_timestamp_text(&tz, Some(fsp)) {
         Ok(dt) => match reader.must_eof() {
             Ok(..) => Some(dt),
             Err(_) => None,

@@ -495,7 +495,7 @@ pub fn register(registry: &mut FunctionRegistry) {
         |_| FunctionDomain::MayThrow,
         vectorize_with_builder_1_arg::<VariantType, TimestampType>(
             |val, output, ctx| match as_str(val)
-                .and_then(|val| string_to_timestamp(val.as_bytes(), ctx.tz.tz))
+                .and_then(|val| string_to_timestamp(val.as_bytes(), 6, ctx.tz.tz))
             {
                 Some(ts) => output.push(ts.timestamp_micros()),
                 None => {
@@ -513,7 +513,7 @@ pub fn register(registry: &mut FunctionRegistry) {
         vectorize_with_builder_1_arg::<VariantType, NullableType<TimestampType>>(
             |val, output, ctx| match as_str(val) {
                 Some(str_val) => {
-                    let timestamp = string_to_timestamp(str_val.as_bytes(), ctx.tz.tz)
+                    let timestamp = string_to_timestamp(str_val.as_bytes(), 6, ctx.tz.tz)
                         .map(|ts| ts.timestamp_micros());
                     match timestamp {
                         Some(timestamp) => output.push(timestamp),

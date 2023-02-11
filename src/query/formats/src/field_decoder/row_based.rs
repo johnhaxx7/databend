@@ -210,7 +210,7 @@ pub trait FieldDecoderRowBased: FieldDecoder {
         column.buffer.clear();
         self.read_string_inner(reader, &mut column.buffer, raw)?;
         let mut buffer_readr = Cursor::new(&column.buffer);
-        let ts = buffer_readr.read_timestamp_text(&self.common_settings().timezone)?;
+        let ts = buffer_readr.read_timestamp_text(&self.common_settings().timezone, None)?;
         if !buffer_readr.eof() {
             let data = column.buffer.to_str().unwrap_or("not utf8");
             let msg = format!(

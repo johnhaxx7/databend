@@ -129,6 +129,13 @@ fn register_string_to_timestamp(registry: &mut FunctionRegistry) {
         |_| FunctionDomain::MayThrow,
         eval_string_to_timestamp,
     );
+    registry
+        .register_passthrough_nullable_2_arg::<StringType, NumberType<u64>, TimestampType, _, _>(
+            "to_timestamp",
+            FunctionProperty::default(),
+            |_, _| FunctionDomain::MayThrow,
+            eval_string_to_timestamp_with_fsp,
+        );
     registry.register_combine_nullable_1_arg::<StringType, TimestampType, _, _>(
         "try_to_timestamp",
         FunctionProperty::default(),
@@ -140,15 +147,24 @@ fn register_string_to_timestamp(registry: &mut FunctionRegistry) {
         val: ValueRef<StringType>,
         ctx: &mut EvalContext,
     ) -> Value<TimestampType> {
-        vectorize_with_builder_1_arg::<StringType, TimestampType>(|val, output, ctx| {
-            match string_to_timestamp(val, ctx.tz.tz) {
+        let fsp = (6 as NumberType<u64>).ref();
+        eval_string_to_timestamp_with_fsp(val, fsp, ctx)
+    }
+
+    fn eval_string_to_timestamp_with_fsp(
+        val: ValueRef<StringType>,
+        fsp: ValueRef<NumberType<u64>>,
+        ctx: &mut EvalContext,
+    ) -> Value<TimestampType> {
+        vectorize_with_builder_2_arg::<StringType, NumberType<u64>, TimestampType>(
+            |val, fsp, output, ctx| match string_to_timestamp(val, fsp as u64, ctx.tz.tz) {
                 Some(ts) => output.push(ts.timestamp_micros()),
                 None => {
                     ctx.set_error(output.len(), "unable to parse string to type `TIMESTAMP`");
                     output.push(0);
                 }
-            }
-        })(val, ctx)
+            },
+        )(val, fsp, ctx)
     }
 }
 

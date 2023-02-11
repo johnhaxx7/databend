@@ -187,7 +187,7 @@ impl FieldJsonAstDecoder {
             Value::String(v) => {
                 let v = v.clone();
                 let mut reader = Cursor::new(v.as_bytes());
-                let ts = reader.read_timestamp_text(&self.timezone)?;
+                let ts = reader.read_timestamp_text(&self.timezone, None)?;
 
                 let micros = ts.timestamp_micros();
                 check_timestamp(micros)?;

@@ -31,7 +31,7 @@ use crate::cursor_ext::cursor_read_bytes_ext::ReadBytesExt;
 
 pub trait BufferReadDateTimeExt {
     fn read_date_text(&mut self, tz: &Tz) -> Result<NaiveDate>;
-    fn read_timestamp_text(&mut self, tz: &Tz) -> Result<DateTime<Tz>>;
+    fn read_timestamp_text(&mut self, tz: &Tz, fsp: Option<u64>) -> Result<DateTime<Tz>>;
     fn parse_time_offset(
         &mut self,
         tz: &Tz,
@@ -75,13 +75,19 @@ where T: AsRef<[u8]>
 {
     fn read_date_text(&mut self, tz: &Tz) -> Result<NaiveDate> {
         // TODO support YYYYMMDD format
-        self.read_timestamp_text(tz)
+        self.read_timestamp_text(tz, None)
             .map(|dt| dt.naive_local().date())
     }
 
-    fn read_timestamp_text(&mut self, tz: &Tz) -> Result<DateTime<Tz>> {
+    fn read_timestamp_text(&mut self, tz: &Tz, fsp: Option<u64>) -> Result<DateTime<Tz>> {
         // Date Part YYYY-MM-DD
         let mut buf = vec![0; DATE_LEN];
+        let fsp_v = fsp.unwrap_or(6);
+        if fsp_v > 6 {
+            return Err(ErrorCode::BadArguments(
+                "Precision must be an integer between 0 and 6.",
+            ));
+        }
         self.read_exact(buf.as_mut_slice())?;
         let mut v = std::str::from_utf8(buf.as_slice())
             .map_err_to_code(ErrorCode::BadBytes, || {
